@@ -335,16 +335,12 @@ button.btn:disabled:active { border-color: var(--hilite) var(--shadow-dark) var(
   padding: 6px 8px;
   border-bottom: 1px solid #ccc6b8;
 }
-.collection-cell { display: inline-flex; gap: 4px; align-items: center; }
-.collection-cell input {
-  font: inherit;
-  padding: 4px 6px;
-  width: 140px;
-  background: #fffef9;
-  border: 2px solid;
-  border-color: var(--shadow-dark) var(--hilite) var(--hilite) var(--shadow-dark);
-}
-.collection-cell .btn { padding: 4px 8px; }
+.admin-track-list tbody:nth-of-type(even) tr:first-child { background: #f3efe4; }
+.row-actions { display: flex; gap: 4px; white-space: nowrap; }
+.row-actions .btn { padding: 4px 8px; }
+.track-editor-row > td { background: #ece6d6; padding: 12px; }
+.track-editor-row .form-grid { max-width: 460px; }
+.editor-actions { display: flex; gap: 8px; margin-top: 4px; }
 .notice { padding: 8px 10px; background: #fff7d6; border: 2px solid #d9c97a; }
 .error { padding: 8px 10px; background: #ffdede; border: 2px solid #cc8a8a; }
 .ok { padding: 8px 10px; background: #dff3df; border: 2px solid #8abf8a; }

@@ -102,27 +102,89 @@ function LoginForm() {
   )
 }
 
-function CollectionCell({ value, options, disabled, onSave }) {
-  const [draft, setDraft] = useState(value)
-  useEffect(() => { setDraft(value) }, [value])
-  const dirty = draft.trim() !== value.trim()
+function TrackRow({ row, busy, onSave, onDelete }) {
+  const [editing, setEditing] = useState(false)
+  const [d, setD] = useState(null)
+
+  function start() {
+    setD({
+      title: row.title || '',
+      subtitle: row.subtitle || '',
+      collection: row.collection || '',
+      notes: row.notes || '',
+      sort_order: row.sort_order ?? 0,
+    })
+    setEditing(true)
+  }
+
+  async function save() {
+    if (!d.title.trim()) return
+    const ok = await onSave(row.id, {
+      title: d.title.trim(),
+      subtitle: d.subtitle.trim() || null,
+      collection: d.collection.trim() || null,
+      notes: d.notes.trim() || null,
+      sort_order: Number(d.sort_order) || 0,
+    })
+    if (ok) setEditing(false)
+  }
+
   return (
-    <span className="collection-cell">
-      <input
-        type="text"
-        list="collections-dl"
-        value={draft}
-        placeholder="—"
-        disabled={disabled}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' && dirty) onSave(draft) }}
-      />
-      {dirty && (
-        <button type="button" className="btn outset" disabled={disabled} onClick={() => onSave(draft)}>
-          Save
-        </button>
+    <tbody>
+      <tr>
+        <td>{row.sort_order}</td>
+        <td>{row.title}{row.subtitle ? ` — ${row.subtitle}` : ''}</td>
+        <td>{row.collection || <span className="muted">—</span>}</td>
+        <td>{fmtTime(row.duration_seconds)}</td>
+        <td className="row-actions">
+          <button className="btn outset" disabled={busy} onClick={editing ? () => setEditing(false) : start}>
+            {editing ? 'Close' : 'Edit'}
+          </button>
+          <button className="btn outset" disabled={busy} onClick={() => onDelete(row)}>Delete</button>
+        </td>
+      </tr>
+      {editing && d && (
+        <tr className="track-editor-row">
+          <td colSpan={5}>
+            <div className="form-grid">
+              <label>
+                Title
+                <input type="text" value={d.title}
+                       onChange={(e) => setD({ ...d, title: e.target.value })} />
+              </label>
+              <label>
+                Subtitle / take <span className="muted">(optional)</span>
+                <input type="text" value={d.subtitle}
+                       onChange={(e) => setD({ ...d, subtitle: e.target.value })} />
+              </label>
+              <label>
+                EP / folder <span className="muted">(optional)</span>
+                <input type="text" list="collections-dl" value={d.collection}
+                       onChange={(e) => setD({ ...d, collection: e.target.value })} />
+              </label>
+              <label>
+                Liner notes <span className="muted">(optional)</span>
+                <textarea value={d.notes}
+                          onChange={(e) => setD({ ...d, notes: e.target.value })} />
+              </label>
+              <label>
+                Sort order <span className="muted">(lower = earlier)</span>
+                <input type="number" value={d.sort_order}
+                       onChange={(e) => setD({ ...d, sort_order: e.target.value })} />
+              </label>
+              <div className="editor-actions">
+                <button className="btn outset" disabled={busy || !d.title.trim()} onClick={save}>
+                  Save changes
+                </button>
+                <button className="btn outset" disabled={busy} onClick={() => setEditing(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
       )}
-    </span>
+    </tbody>
   )
 }
 
@@ -201,14 +263,14 @@ function AdminConsole({ email }) {
     refresh()
   }
 
-  async function onSetCollection(row, value) {
-    const next = value.trim() || null
+  async function onSave(id, patch) {
     setBusy(true)
-    const { error } = await supabase.from('tracks').update({ collection: next }).eq('id', row.id)
+    const { error } = await supabase.from('tracks').update(patch).eq('id', id)
     setBusy(false)
-    if (error) { setMsg({ kind: 'error', text: error.message }); return }
-    setMsg({ kind: 'ok', text: `Moved "${row.title}" to ${next ? `"${next}"` : 'Loose tracks'}.` })
+    if (error) { setMsg({ kind: 'error', text: error.message }); return false }
+    setMsg({ kind: 'ok', text: `Saved "${patch.title}".` })
     refresh()
+    return true
   }
 
   async function onDelete(row) {
@@ -279,28 +341,9 @@ function AdminConsole({ email }) {
             <thead>
               <tr><th>#</th><th>Title</th><th>EP / folder</th><th>Length</th><th></th></tr>
             </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.sort_order}</td>
-                  <td>{r.title}{r.subtitle ? ` — ${r.subtitle}` : ''}</td>
-                  <td>
-                    <CollectionCell
-                      value={r.collection || ''}
-                      options={collections}
-                      disabled={busy}
-                      onSave={(v) => onSetCollection(r, v)}
-                    />
-                  </td>
-                  <td>{fmtTime(r.duration_seconds)}</td>
-                  <td>
-                    <button className="btn outset" disabled={busy} onClick={() => onDelete(r)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+            {rows.map((r) => (
+              <TrackRow key={r.id} row={r} busy={busy} onSave={onSave} onDelete={onDelete} />
+            ))}
           </table>
         )}
       </div>
