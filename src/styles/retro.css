@@ -54,7 +54,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 28px 16px 64px;
+  padding: 78px 16px 64px;
 }
 
 .window {
@@ -400,8 +400,9 @@ a { color: var(--link); }
 /* ---- spinning logo (decorative) -------------------------------------------- */
 .spin-stage {
   position: fixed;
-  left: 20px;
-  bottom: 48px;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 5;
   perspective: 620px;
   pointer-events: none;
