@@ -2,9 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import TitleBar from '../components/TitleBar.jsx'
 import Taskbar from '../components/Taskbar.jsx'
 import DancingHamster from '../components/DancingHamster.jsx'
+import SpinningLogo from '../components/SpinningLogo.jsx'
+import Screensaver from '../components/Screensaver.jsx'
 import Teleprompter from '../components/Teleprompter.jsx'
 import { fmtTime } from '../lib/format.js'
 import { supabase, isConfigured, publicAudioUrl } from '../lib/supabaseClient.js'
+
+const IDLE_MS = 60_000
 
 export default function Player() {
   const audioRef = useRef(null)
@@ -26,6 +30,24 @@ export default function Player() {
   useEffect(() => {
     try { localStorage.setItem('av:lyrics', showLyrics ? '1' : '0') } catch { /* ignore */ }
   }, [showLyrics])
+
+  // Screensaver after IDLE_MS with no input; any input wakes it.
+  const [idle, setIdle] = useState(false)
+  useEffect(() => {
+    let timer
+    const arm = () => {
+      setIdle(false)
+      clearTimeout(timer)
+      timer = setTimeout(() => setIdle(true), IDLE_MS)
+    }
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel']
+    events.forEach((e) => window.addEventListener(e, arm, { passive: true }))
+    arm()
+    return () => {
+      clearTimeout(timer)
+      events.forEach((e) => window.removeEventListener(e, arm))
+    }
+  }, [])
 
   const current = index >= 0 ? tracks[index] : null
 
@@ -294,8 +316,11 @@ export default function Player() {
         />
       )}
 
+      <SpinningLogo />
       <DancingHamster />
       <Taskbar status={status} />
+
+      {idle && <Screensaver onWake={() => setIdle(false)} />}
     </div>
   )
 }
