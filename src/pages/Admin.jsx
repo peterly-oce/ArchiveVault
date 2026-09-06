@@ -112,6 +112,7 @@ function TrackRow({ row, busy, onSave, onDelete }) {
       subtitle: row.subtitle || '',
       collection: row.collection || '',
       notes: row.notes || '',
+      lyrics: row.lyrics || '',
       sort_order: row.sort_order ?? 0,
     })
     setEditing(true)
@@ -124,6 +125,7 @@ function TrackRow({ row, busy, onSave, onDelete }) {
       subtitle: d.subtitle.trim() || null,
       collection: d.collection.trim() || null,
       notes: d.notes.trim() || null,
+      lyrics: d.lyrics.trim() || null,
       sort_order: Number(d.sort_order) || 0,
     })
     if (ok) setEditing(false)
@@ -168,6 +170,11 @@ function TrackRow({ row, busy, onSave, onDelete }) {
                           onChange={(e) => setD({ ...d, notes: e.target.value })} />
               </label>
               <label>
+                Lyrics <span className="muted">(optional — karaoke panel; one line per line. Prefix a line with [mm:ss] for exact sync)</span>
+                <textarea className="lyrics-input" value={d.lyrics}
+                          onChange={(e) => setD({ ...d, lyrics: e.target.value })} />
+              </label>
+              <label>
                 Sort order <span className="muted">(lower = earlier)</span>
                 <input type="number" value={d.sort_order}
                        onChange={(e) => setD({ ...d, sort_order: e.target.value })} />
@@ -193,6 +200,7 @@ function AdminConsole({ email }) {
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [notes, setNotes] = useState('')
+  const [lyrics, setLyrics] = useState('')
   const [collection, setCollection] = useState('')
   const [sortOrder, setSortOrder] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -244,6 +252,7 @@ function AdminConsole({ email }) {
       title: title.trim(),
       subtitle: subtitle.trim() || null,
       notes: notes.trim() || null,
+      lyrics: lyrics.trim() || null,
       collection: collection.trim() || null,
       storage_path: path,
       duration_seconds: duration,
@@ -258,7 +267,7 @@ function AdminConsole({ email }) {
     }
 
     setMsg({ kind: 'ok', text: `Added "${title.trim()}".` })
-    setTitle(''); setSubtitle(''); setNotes(''); setSortOrder(0)
+    setTitle(''); setSubtitle(''); setNotes(''); setLyrics(''); setSortOrder(0)
     if (fileRef.current) fileRef.current.value = ''
     refresh()
   }
@@ -308,6 +317,10 @@ function AdminConsole({ email }) {
         <label>
           Liner notes <span className="muted">(optional)</span>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </label>
+        <label>
+          Lyrics <span className="muted">(optional — karaoke panel; one line per line. Prefix a line with [mm:ss] for exact sync)</span>
+          <textarea className="lyrics-input" value={lyrics} onChange={(e) => setLyrics(e.target.value)} />
         </label>
         <label>
           EP / folder <span className="muted">(optional — pick one or type a new name)</span>

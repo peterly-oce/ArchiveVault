@@ -9,6 +9,7 @@ create table if not exists public.tracks (
   title            text not null,
   subtitle         text,
   notes            text,
+  lyrics           text,                   -- shown in the player's teleprompter
   collection       text,                   -- EP / folder name, null = loose track
   storage_path     text not null,          -- object key inside the 'tracks' bucket
   duration_seconds integer,
@@ -16,8 +17,9 @@ create table if not exists public.tracks (
   created_at       timestamptz not null default now()
 );
 
--- added after first release — safe on a table that predates it
+-- added after first release — safe on a table that predates them
 alter table public.tracks add column if not exists collection text;
+alter table public.tracks add column if not exists lyrics text;
 
 alter table public.tracks enable row level security;
 

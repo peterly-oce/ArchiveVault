@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import TitleBar from '../components/TitleBar.jsx'
 import Taskbar from '../components/Taskbar.jsx'
 import DancingHamster from '../components/DancingHamster.jsx'
+import Teleprompter from '../components/Teleprompter.jsx'
 import { fmtTime } from '../lib/format.js'
 import { supabase, isConfigured, publicAudioUrl } from '../lib/supabaseClient.js'
 
@@ -17,6 +18,14 @@ export default function Player() {
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(0.85)
   const [status, setStatus] = useState('ArchiveVault ready.')
+
+  // Teleprompter — off by default; remembers the viewer's last choice.
+  const [showLyrics, setShowLyrics] = useState(() => {
+    try { return localStorage.getItem('av:lyrics') === '1' } catch { return false }
+  })
+  useEffect(() => {
+    try { localStorage.setItem('av:lyrics', showLyrics ? '1' : '0') } catch { /* ignore */ }
+  }, [showLyrics])
 
   const current = index >= 0 ? tracks[index] : null
 
@@ -180,6 +189,13 @@ export default function Player() {
               </button>
               <button className="btn outset" onClick={pause} disabled={!playing}>■ Stop</button>
               <button className="btn outset" onClick={next} disabled={!tracks.length}>►► Next</button>
+              <button
+                className="btn outset"
+                onClick={() => setShowLyrics((v) => !v)}
+                aria-pressed={showLyrics}
+              >
+                📜 Lyrics
+              </button>
               <span className="spacer" />
               <div className="volume-wrap">
                 <span className="field-label">🔊 Volume</span>
@@ -268,6 +284,15 @@ export default function Player() {
         onPause={() => setPlaying(false)}
         onError={() => { setStatus('Audio failed to load.'); setPlaying(false) }}
       />
+
+      {showLyrics && (
+        <Teleprompter
+          track={current}
+          time={time}
+          duration={duration}
+          onClose={() => setShowLyrics(false)}
+        />
+      )}
 
       <DancingHamster />
       <Taskbar status={status} />

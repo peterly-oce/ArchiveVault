@@ -328,6 +328,7 @@ button.btn:disabled:active { border-color: var(--hilite) var(--shadow-dark) var(
   border-color: var(--shadow-dark) var(--hilite) var(--hilite) var(--shadow-dark);
 }
 .form-grid textarea { min-height: 90px; resize: vertical; }
+.form-grid textarea.lyrics-input { min-height: 150px; font-family: Consolas, "Courier New", monospace; }
 
 .admin-track-list { width: 100%; border-collapse: collapse; margin-top: 8px; }
 .admin-track-list th, .admin-track-list td {
@@ -346,6 +347,74 @@ button.btn:disabled:active { border-color: var(--hilite) var(--shadow-dark) var(
 .ok { padding: 8px 10px; background: #dff3df; border: 2px solid #8abf8a; }
 
 a { color: var(--link); }
+
+/* ---- teleprompter -------------------------------------------------------------- */
+.teleprompter {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(380px, 92vw);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background: #06251b;
+  border-left: 3px solid #12c26a;
+  box-shadow: -8px 0 22px rgba(0, 0, 0, 0.4);
+}
+.tp-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  background: #12c26a;
+  color: #04170f;
+}
+.tp-bar .tp-title {
+  flex: 1;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-auto {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.tp-bar .btn { padding: 2px 9px; }
+.tp-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 45vh 22px;
+}
+.tp-lines {
+  font-family: Consolas, "Courier New", monospace;
+}
+.tp-line {
+  margin: 0;
+  padding: 7px 0;
+  font-size: 20px;
+  line-height: 1.5;
+  font-weight: 700;
+  color: #2f8f63;
+  opacity: 0.72;
+  white-space: pre-wrap;
+  transition: color 0.25s, opacity 0.25s, transform 0.25s;
+}
+.tp-line.done { opacity: 0.4; }
+.tp-line.active {
+  color: #c8ffe4;
+  opacity: 1;
+  transform: scale(1.06);
+  transform-origin: left center;
+  text-shadow: 0 0 14px rgba(140, 255, 205, 0.7);
+}
+.tp-empty { color: #2f8f63; font-family: Consolas, monospace; }
+
+@media (max-width: 620px) { .teleprompter { width: 100vw; } }
 
 /* ---- dancing hamster (decorative) -------------------------------------------- */
 .hamster-zone {
