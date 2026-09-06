@@ -1,0 +1,329 @@
+/* ---- ArchiveVault : Windows 9x flavoured skin ------------------------------ */
+
+:root {
+  --desktop: #3a7d8c;
+  --desktop-grid: rgba(255, 255, 255, 0.05);
+  --face: #d9d4c8;
+  --face-dark: #cfc9bb;
+  --shadow: #7f7a6e;
+  --shadow-dark: #55514a;
+  --hilite: #ffffff;
+  --titlebar-a: #1c5c8c;
+  --titlebar-b: #2f86bd;
+  --ink: #1b1b1b;
+  --lcd-bg: #05251a;
+  --lcd-ink: #3fd07f;
+  --lcd-dim: #1f7d50;
+  --link: #143c8c;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: Tahoma, "Segoe UI", "MS Sans Serif", system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  background-color: var(--desktop);
+  background-image:
+    linear-gradient(var(--desktop-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--desktop-grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ---- bevels -------------------------------------------------------------- */
+.outset {
+  border: 2px solid;
+  border-color: var(--hilite) var(--shadow-dark) var(--shadow-dark) var(--hilite);
+  box-shadow: inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
+}
+.inset {
+  border: 2px solid;
+  border-color: var(--shadow-dark) var(--hilite) var(--hilite) var(--shadow-dark);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--face);
+}
+.groove {
+  border: 2px groove var(--face);
+}
+
+/* ---- window ----------------------------------------------------------------- */
+.screen {
+  min-height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 28px 16px 64px;
+}
+
+.window {
+  width: min(1000px, 100%);
+  background: var(--face);
+  padding: 3px;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 8px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--titlebar-a), var(--titlebar-b));
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.titlebar .tb-icon {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  background: #0e3f63;
+  border: 1px solid rgba(255,255,255,0.4);
+  font-size: 12px;
+}
+.titlebar .tb-title { flex: 1; font-size: 14px; }
+.titlebar .tb-buttons { display: flex; gap: 3px; }
+.tb-btn {
+  width: 20px; height: 18px;
+  background: var(--face);
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 700;
+  cursor: default;
+}
+
+.window-body { padding: 12px; display: grid; gap: 12px; }
+
+/* ---- panels --------------------------------------------------------------- */
+.panel { background: var(--face); padding: 12px; }
+.panel > .panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: -2px 0 10px;
+}
+.panel-head h2, .panel-head h3 {
+  margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+}
+.panel-head .big { font-size: 18px; text-transform: none; letter-spacing: 0; }
+.tag {
+  font-size: 11px; padding: 2px 8px; background: var(--face);
+}
+
+/* ---- LCD / now playing --------------------------------------------------- */
+.lcd {
+  background: var(--lcd-bg);
+  color: var(--lcd-ink);
+  font-family: Consolas, "Courier New", monospace;
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+  text-shadow: 0 0 6px rgba(63, 208, 127, 0.45);
+}
+.lcd .lcd-title { font-size: 16px; font-weight: 700; }
+.lcd .lcd-sub { font-size: 12px; color: var(--lcd-dim); margin-top: 2px; }
+.lcd .lcd-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-size: 13px;
+}
+.lcd .lcd-state { color: var(--lcd-dim); letter-spacing: 3px; }
+
+/* ---- sliders ------------------------------------------------------------- */
+.field-label { font-weight: 700; margin-bottom: 4px; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--face-dark);
+  border: 2px solid;
+  border-color: var(--shadow-dark) var(--hilite) var(--hilite) var(--shadow-dark);
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: var(--face-dark);
+  border: 2px solid;
+  border-color: var(--shadow-dark) var(--hilite) var(--hilite) var(--shadow-dark);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 22px;
+  margin-top: -10px;
+  background: var(--face);
+  border: 2px solid;
+  border-color: var(--hilite) var(--shadow-dark) var(--shadow-dark) var(--hilite);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 20px;
+  border-radius: 0;
+  background: var(--face);
+  border: 2px solid;
+  border-color: var(--hilite) var(--shadow-dark) var(--shadow-dark) var(--hilite);
+}
+
+/* ---- transport -------------------------------------------------------------- */
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.transport .spacer { flex: 1; }
+
+button.btn, .btn {
+  font: inherit;
+  background: var(--face);
+  padding: 7px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+}
+button.btn:active, .btn:active {
+  border-color: var(--shadow-dark) var(--hilite) var(--hilite) var(--shadow-dark);
+  box-shadow: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--face);
+}
+button.btn:disabled { color: var(--shadow); cursor: default; }
+button.btn:disabled:active { border-color: var(--hilite) var(--shadow-dark) var(--shadow-dark) var(--hilite); }
+
+.volume-wrap { display: flex; align-items: center; gap: 8px; min-width: 200px; }
+.volume-wrap .field-label { margin: 0; }
+
+/* ---- lower grid ----------------------------------------------------------- */
+.lower {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .lower { grid-template-columns: 1fr; }
+}
+
+.notes-body {
+  background: #fffef9;
+  padding: 10px;
+  min-height: 150px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+.muted { color: var(--shadow-dark); }
+
+/* ---- playlist ----------------------------------------------------------------- */
+.playlist {
+  background: #fffef9;
+  min-height: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.playlist ol { list-style: none; margin: 0; padding: 0; }
+.playlist li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #ece7db;
+}
+.playlist li:hover { background: #eef4ff; }
+.playlist li.active { background: #123a8c; color: #fff; }
+.playlist li .idx { width: 22px; text-align: right; opacity: 0.7; }
+.playlist li .pl-title { flex: 1; }
+.playlist li .pl-dur { font-family: Consolas, monospace; font-size: 12px; opacity: 0.8; }
+.playlist-empty {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  gap: 6px;
+  text-align: center;
+  color: var(--shadow-dark);
+}
+
+/* ---- taskbar --------------------------------------------------------------- */
+.taskbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: var(--face);
+  padding: 3px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.start-btn { font-weight: 700; padding: 5px 12px; }
+.taskbar .status {
+  flex: 1;
+  padding: 5px 10px;
+  background: var(--face);
+  font-size: 12px;
+}
+.taskbar .clock {
+  padding: 5px 12px;
+  font-variant-numeric: tabular-nums;
+  background: var(--face);
+}
+
+.start-menu {
+  position: fixed;
+  left: 6px;
+  bottom: 38px;
+  width: 240px;
+  background: var(--face);
+  padding: 3px;
+  display: flex;
+}
+.start-menu .rail {
+  width: 26px;
+  background: linear-gradient(var(--titlebar-a), var(--titlebar-b));
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 0;
+  letter-spacing: 2px;
+}
+.start-menu ul { list-style: none; margin: 0; padding: 4px; flex: 1; }
+.start-menu li {
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.start-menu li:hover { background: #123a8c; color: #fff; }
+.start-menu .sep { height: 2px; margin: 4px 2px; border-top: 1px solid var(--shadow); border-bottom: 1px solid var(--hilite); padding: 0; }
+
+/* ---- forms (admin) ------------------------------------------------------------ */
+.form-grid { display: grid; gap: 10px; max-width: 460px; }
+.form-grid label { display: grid; gap: 4px; font-weight: 700; }
+.form-grid input[type="text"],
+.form-grid input[type="email"],
+.form-grid input[type="password"],
+.form-grid input[type="number"],
+.form-grid input[type="file"],
+.form-grid textarea {
+  font: inherit;
+  padding: 6px 8px;
+  background: #fffef9;
+  border: 2px solid;
+  border-color: var(--shadow-dark) var(--hilite) var(--hilite) var(--shadow-dark);
+}
+.form-grid textarea { min-height: 90px; resize: vertical; }
+
+.admin-track-list { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.admin-track-list th, .admin-track-list td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #ccc6b8;
+}
+.notice { padding: 8px 10px; background: #fff7d6; border: 2px solid #d9c97a; }
+.error { padding: 8px 10px; background: #ffdede; border: 2px solid #cc8a8a; }
+.ok { padding: 8px 10px; background: #dff3df; border: 2px solid #8abf8a; }
+
+a { color: var(--link); }
