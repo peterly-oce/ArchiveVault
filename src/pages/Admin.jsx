@@ -102,11 +102,36 @@ function LoginForm() {
   )
 }
 
+function CollectionCell({ value, options, disabled, onSave }) {
+  const [draft, setDraft] = useState(value)
+  useEffect(() => { setDraft(value) }, [value])
+  const dirty = draft.trim() !== value.trim()
+  return (
+    <span className="collection-cell">
+      <input
+        type="text"
+        list="collections-dl"
+        value={draft}
+        placeholder="—"
+        disabled={disabled}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && dirty) onSave(draft) }}
+      />
+      {dirty && (
+        <button type="button" className="btn outset" disabled={disabled} onClick={() => onSave(draft)}>
+          Save
+        </button>
+      )}
+    </span>
+  )
+}
+
 function AdminConsole({ email }) {
   const fileRef = useRef(null)
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [notes, setNotes] = useState('')
+  const [collection, setCollection] = useState('')
   const [sortOrder, setSortOrder] = useState(0)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null) // {kind, text}
@@ -114,11 +139,15 @@ function AdminConsole({ email }) {
   const [rows, setRows] = useState([])
   const [loadingRows, setLoadingRows] = useState(true)
 
+  const collections = [...new Set(
+    rows.map((r) => (r.collection || '').trim()).filter(Boolean),
+  )].sort((a, b) => a.localeCompare(b))
+
   async function refresh() {
     setLoadingRows(true)
     const { data, error } = await supabase
       .from('tracks')
-      .select('id, title, subtitle, storage_path, duration_seconds, sort_order, created_at')
+      .select('*')
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true })
     setLoadingRows(false)
@@ -153,6 +182,7 @@ function AdminConsole({ email }) {
       title: title.trim(),
       subtitle: subtitle.trim() || null,
       notes: notes.trim() || null,
+      collection: collection.trim() || null,
       storage_path: path,
       duration_seconds: duration,
       sort_order: Number(sortOrder) || 0,
@@ -168,6 +198,16 @@ function AdminConsole({ email }) {
     setMsg({ kind: 'ok', text: `Added "${title.trim()}".` })
     setTitle(''); setSubtitle(''); setNotes(''); setSortOrder(0)
     if (fileRef.current) fileRef.current.value = ''
+    refresh()
+  }
+
+  async function onSetCollection(row, value) {
+    const next = value.trim() || null
+    setBusy(true)
+    const { error } = await supabase.from('tracks').update({ collection: next }).eq('id', row.id)
+    setBusy(false)
+    if (error) { setMsg({ kind: 'error', text: error.message }); return }
+    setMsg({ kind: 'ok', text: `Moved "${row.title}" to ${next ? `"${next}"` : 'Loose tracks'}.` })
     refresh()
   }
 
@@ -208,6 +248,19 @@ function AdminConsole({ email }) {
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
         <label>
+          EP / folder <span className="muted">(optional — pick one or type a new name)</span>
+          <input
+            type="text"
+            list="collections-dl"
+            value={collection}
+            placeholder="e.g. Basement Demos"
+            onChange={(e) => setCollection(e.target.value)}
+          />
+          <datalist id="collections-dl">
+            {collections.map((c) => <option key={c} value={c} />)}
+          </datalist>
+        </label>
+        <label>
           Sort order <span className="muted">(lower = earlier)</span>
           <input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
         </label>
@@ -224,13 +277,21 @@ function AdminConsole({ email }) {
         ) : (
           <table className="admin-track-list">
             <thead>
-              <tr><th>#</th><th>Title</th><th>Length</th><th></th></tr>
+              <tr><th>#</th><th>Title</th><th>EP / folder</th><th>Length</th><th></th></tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id}>
                   <td>{r.sort_order}</td>
                   <td>{r.title}{r.subtitle ? ` — ${r.subtitle}` : ''}</td>
+                  <td>
+                    <CollectionCell
+                      value={r.collection || ''}
+                      options={collections}
+                      disabled={busy}
+                      onSave={(v) => onSetCollection(r, v)}
+                    />
+                  </td>
                   <td>{fmtTime(r.duration_seconds)}</td>
                   <td>
                     <button className="btn outset" disabled={busy} onClick={() => onDelete(r)}>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import TitleBar from '../components/TitleBar.jsx'
 import Taskbar from '../components/Taskbar.jsx'
 import DancingHamster from '../components/DancingHamster.jsx'
@@ -28,9 +28,10 @@ export default function Player() {
         setErrorMsg('Supabase anon key is not set. Add VITE_SUPABASE_ANON_KEY and rebuild.')
         return
       }
+      // select('*') so a not-yet-migrated DB (no `collection` column) still works
       const { data, error } = await supabase
         .from('tracks')
-        .select('id, title, subtitle, notes, storage_path, duration_seconds, sort_order, created_at')
+        .select('*')
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true })
       if (cancelled) return
@@ -107,6 +108,23 @@ export default function Player() {
       setTime(el.currentTime)
     }
   }
+
+  // Group the playlist by `collection` for display only — playback still walks
+  // the flat `tracks` array in DB order, so Next/Prev flow across groups.
+  const grouped = useMemo(() => {
+    const map = new Map()
+    tracks.forEach((t, i) => {
+      const key = (t.collection || '').trim()
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push({ t, i })
+    })
+    const minSort = (items) => Math.min(...items.map((x) => x.t.sort_order ?? 0))
+    return [...map.entries()].sort((a, b) => {
+      if (!a[0]) return 1 // loose tracks last
+      if (!b[0]) return -1
+      return minSort(a[1]) - minSort(b[1]) || a[0].localeCompare(b[0])
+    })
+  }, [tracks])
 
   const stateLabel = loadState === 'error'
     ? 'ERROR'
@@ -211,22 +229,29 @@ export default function Player() {
 
               {loadState === 'ready' && (
                 <div className="playlist inset">
-                  <ol>
-                    {tracks.map((t, i) => (
-                      <li
-                        key={t.id}
-                        className={i === index ? 'active' : ''}
-                        onClick={() => loadTrack(i, true)}
-                      >
-                        <span className="idx">{i + 1}.</span>
-                        <span className="pl-title">
-                          {t.title}
-                          {t.subtitle ? <span className="muted"> — {t.subtitle}</span> : null}
-                        </span>
-                        <span className="pl-dur">{fmtTime(t.duration_seconds)}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  {grouped.map(([name, items]) => (
+                    <div className="pl-group-block" key={name || '__loose'}>
+                      {(name || grouped.length > 1) && (
+                        <div className="pl-group">{name || 'Loose tracks'}</div>
+                      )}
+                      <ol>
+                        {items.map(({ t, i }) => (
+                          <li
+                            key={t.id}
+                            className={i === index ? 'active' : ''}
+                            onClick={() => loadTrack(i, true)}
+                          >
+                            <span className="idx">{i + 1}.</span>
+                            <span className="pl-title">
+                              {t.title}
+                              {t.subtitle ? <span className="muted"> — {t.subtitle}</span> : null}
+                            </span>
+                            <span className="pl-dur">{fmtTime(t.duration_seconds)}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
