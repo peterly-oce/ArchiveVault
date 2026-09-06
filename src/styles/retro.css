@@ -327,3 +327,57 @@ button.btn:disabled:active { border-color: var(--hilite) var(--shadow-dark) var(
 .ok { padding: 8px 10px; background: #dff3df; border: 2px solid #8abf8a; }
 
 a { color: var(--link); }
+
+/* ---- dancing hamster (decorative) -------------------------------------------- */
+.hamster-zone {
+  position: fixed;
+  right: 18px;
+  bottom: 44px;
+  width: 90px;
+  pointer-events: none;
+  z-index: 5;
+}
+.hamster {
+  transform-origin: 50% 90%;
+  animation: hamster-dance 0.5s steps(2, jump-none) infinite;
+}
+.hamster-arm { transform-origin: 50% 20%; animation: hamster-arm 0.5s ease-in-out infinite; }
+.hamster-arm-r { animation-delay: 0.25s; }
+.hamster-feet { animation: hamster-feet 0.5s steps(2) infinite; }
+.hamster-notes {
+  position: absolute;
+  right: 4px;
+  top: -14px;
+  display: flex;
+  gap: 6px;
+  font-size: 13px;
+  color: #fff;
+}
+.hamster-notes span { animation: hamster-note 1.4s ease-in infinite; opacity: 0; }
+.hamster-notes span:nth-child(2) { animation-delay: 0.45s; }
+.hamster-notes span:nth-child(3) { animation-delay: 0.9s; }
+
+@keyframes hamster-dance {
+  0%   { transform: translateY(0)     rotate(-6deg); }
+  50%  { transform: translateY(-7px)  rotate(6deg); }
+  100% { transform: translateY(0)     rotate(-6deg); }
+}
+@keyframes hamster-arm {
+  0%, 100% { transform: rotate(-25deg); }
+  50%      { transform: rotate(35deg); }
+}
+@keyframes hamster-feet {
+  0%, 100% { transform: translateX(-2px); }
+  50%      { transform: translateX(2px); }
+}
+@keyframes hamster-note {
+  0%   { opacity: 0; transform: translateY(0) scale(0.8); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-26px) scale(1.1); }
+}
+
+@media (max-width: 760px) { .hamster-zone { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .hamster, .hamster-arm, .hamster-feet, .hamster-notes span { animation: none; }
+  .hamster-notes span { opacity: 1; }
+}

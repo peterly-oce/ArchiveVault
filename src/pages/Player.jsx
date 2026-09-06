@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import TitleBar from '../components/TitleBar.jsx'
 import Taskbar from '../components/Taskbar.jsx'
+import DancingHamster from '../components/DancingHamster.jsx'
 import { fmtTime } from '../lib/format.js'
 import { supabase, isConfigured, publicAudioUrl } from '../lib/supabaseClient.js'
 
@@ -243,6 +244,7 @@ export default function Player() {
         onError={() => { setStatus('Audio failed to load.'); setPlaying(false) }}
       />
 
+      <DancingHamster />
       <Taskbar status={status} />
     </div>
   )
