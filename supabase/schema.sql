@@ -1,4 +1,5 @@
 -- ArchiveVault — run this once in the Supabase SQL editor.
+-- Safe to re-run: every statement is idempotent.
 -- Model: listening is PUBLIC (anyone with the link). Only authenticated
 -- admin users can add / change / delete tracks and audio files.
 
@@ -16,10 +17,16 @@ create table if not exists public.tracks (
 
 alter table public.tracks enable row level security;
 
-drop policy if exists "tracks: public read"        on public.tracks;
-drop policy if exists "tracks: admin insert"       on public.tracks;
-drop policy if exists "tracks: admin update"       on public.tracks;
-drop policy if exists "tracks: admin delete"       on public.tracks;
+-- Table-level privileges for the API roles (Supabase normally auto-grants
+-- these, but set them explicitly so a pre-existing table works too).
+grant usage on schema public to anon, authenticated;
+grant select on public.tracks to anon, authenticated;
+grant insert, update, delete on public.tracks to authenticated;
+
+drop policy if exists "tracks: public read"  on public.tracks;
+drop policy if exists "tracks: admin insert" on public.tracks;
+drop policy if exists "tracks: admin update" on public.tracks;
+drop policy if exists "tracks: admin delete" on public.tracks;
 
 create policy "tracks: public read"
   on public.tracks for select
@@ -42,10 +49,10 @@ insert into storage.buckets (id, name, public)
 values ('tracks', 'tracks', true)
 on conflict (id) do update set public = true;
 
-drop policy if exists "audio: public read"   on storage.objects;
-drop policy if exists "audio: admin write"   on storage.objects;
-drop policy if exists "audio: admin update"  on storage.objects;
-drop policy if exists "audio: admin delete"  on storage.objects;
+drop policy if exists "audio: public read"  on storage.objects;
+drop policy if exists "audio: admin write"  on storage.objects;
+drop policy if exists "audio: admin update" on storage.objects;
+drop policy if exists "audio: admin delete" on storage.objects;
 
 create policy "audio: public read"
   on storage.objects for select
@@ -62,3 +69,6 @@ create policy "audio: admin update"
 create policy "audio: admin delete"
   on storage.objects for delete to authenticated
   using (bucket_id = 'tracks');
+
+-- 3. Let PostgREST see the new table immediately ------------------------------
+notify pgrst, 'reload schema';
