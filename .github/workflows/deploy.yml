@@ -24,10 +24,9 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Supabase config comes from the committed .env.production (public values
+      # only — the anon key is safe client-side, protected by RLS).
       - run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
       # SPA fallback so deep links / refreshes don't 404 on Pages
       - run: cp dist/index.html dist/404.html
       - uses: actions/upload-pages-artifact@v3

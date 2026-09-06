@@ -35,15 +35,18 @@ Open the printed URL. The player is at `/`, admin at `/#/admin`.
 ## 3. Deploy to GitHub Pages
 
 1. Push this repo to `https://github.com/peterly-oce/ArchiveVault` (branch `main`).
-2. **Settings → Secrets and variables → Actions → Variables** — add repository variables:
-   - `VITE_SUPABASE_URL` = `https://ykvkghcyvwzeibhfddho.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY` = your anon public key
-3. **Settings → Pages → Build and deployment → Source** = **GitHub Actions**.
-4. Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+2. **Settings → Pages → Build and deployment → Source** = **GitHub Actions**.
+3. Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
    and publishes to `https://peterly-oce.github.io/ArchiveVault/`.
 
-> The anon key is meant to ship in client code; it is safe in a repo variable and in the
-> built bundle. Row Level Security is what actually protects writes.
+Supabase config is read from [`.env.production`](.env.production), which is committed
+on purpose. It holds **public values only** — the Supabase URL and the `anon` key. The
+anon key is designed to ship in client code (it already appears in the built bundle) and
+Row Level Security is what actually protects writes. **Never** put the `service_role` key
+or the DB password in that file.
+
+To point at a different Supabase project, edit `.env.production` and push — no GitHub
+Actions variables or secrets are involved.
 
 ## 4. Adding music
 
