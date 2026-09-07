@@ -31,23 +31,44 @@ export default function Player() {
     try { localStorage.setItem('av:lyrics', showLyrics ? '1' : '0') } catch { /* ignore */ }
   }, [showLyrics])
 
-  // Screensaver after IDLE_MS with no input; any input wakes it.
+  // Screensaver after IDLE_MS with no input. While it's up the Screensaver owns
+  // the wake decision (so Space can "hold" it); page activity doesn't re-arm.
   const [idle, setIdle] = useState(false)
-  useEffect(() => {
-    let timer
-    const arm = () => {
-      setIdle(false)
-      clearTimeout(timer)
-      timer = setTimeout(() => setIdle(true), IDLE_MS)
-    }
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel']
-    events.forEach((e) => window.addEventListener(e, arm, { passive: true }))
-    arm()
-    return () => {
-      clearTimeout(timer)
-      events.forEach((e) => window.removeEventListener(e, arm))
-    }
+  const idleRef = useRef(false)
+  const idleTimer = useRef(null)
+  useEffect(() => { idleRef.current = idle }, [idle])
+  const armIdle = useCallback(() => {
+    clearTimeout(idleTimer.current)
+    idleTimer.current = setTimeout(() => setIdle(true), IDLE_MS)
   }, [])
+  useEffect(() => {
+    const onActivity = () => { if (!idleRef.current) armIdle() }
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel']
+    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }))
+    armIdle()
+    return () => {
+      clearTimeout(idleTimer.current)
+      events.forEach((e) => window.removeEventListener(e, onActivity))
+    }
+  }, [armIdle])
+  const wake = useCallback(() => { setIdle(false); armIdle() }, [armIdle])
+
+  const ssStats = useMemo(() => {
+    const objects = tracks.length
+    const secs = tracks.reduce((s, t) => s + (t.duration_seconds || 0), 0)
+    const bytes = secs * 40000 // rough, ~320 kbps
+    const onDisc = bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB`
+      : bytes >= 1e6 ? `${(bytes / 1e6).toFixed(1)} MB`
+      : `${Math.max(0, Math.round(bytes / 1e3))} KB`
+    const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    const dates = tracks.map((t) => t.created_at).filter(Boolean).sort()
+    let lastSealed = '—'
+    if (dates.length) {
+      const d = new Date(dates[dates.length - 1])
+      lastSealed = `${String(d.getDate()).padStart(2, '0')} ${MON[d.getMonth()]} ${d.getFullYear()}`
+    }
+    return { objects, onDisc, lastSealed }
+  }, [tracks])
 
   const current = index >= 0 ? tracks[index] : null
 
@@ -320,7 +341,7 @@ export default function Player() {
       <DancingHamster />
       <Taskbar status={status} />
 
-      {idle && <Screensaver onWake={() => setIdle(false)} />}
+      {idle && <Screensaver stats={ssStats} onWake={wake} />}
     </div>
   )
 }

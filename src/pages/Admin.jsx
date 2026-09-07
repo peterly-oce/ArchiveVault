@@ -5,6 +5,22 @@ import Taskbar from '../components/Taskbar.jsx'
 import { fmtTime, slugifyFilename } from '../lib/format.js'
 import { supabase, isConfigured, TRACKS_BUCKET } from '../lib/supabaseClient.js'
 
+// PostgREST caches the table schema and can lag a freshly-added column
+// ("Could not find the 'X' column of 'tracks' in the schema cache"). Retry the
+// write with that column dropped so the track still saves; caller is warned.
+async function tolerantWrite(run, data) {
+  const payload = { ...data }
+  const dropped = []
+  for (let i = 0; i < 5; i++) {
+    const res = await run(payload)
+    const m = /Could not find the '(.+?)' column/.exec(res.error?.message || '')
+    if (!m || !(m[1] in payload)) return { ...res, dropped }
+    delete payload[m[1]]
+    dropped.push(m[1])
+  }
+  return { ...(await run(payload)), dropped }
+}
+
 function readAudioDuration(file) {
   return new Promise((resolve) => {
     try {
@@ -248,16 +264,19 @@ function AdminConsole({ email }) {
     if (up.error) { setBusy(false); setMsg({ kind: 'error', text: up.error.message }); return }
 
     setMsg({ kind: 'notice', text: 'Saving track…' })
-    const ins = await supabase.from('tracks').insert({
-      title: title.trim(),
-      subtitle: subtitle.trim() || null,
-      notes: notes.trim() || null,
-      lyrics: lyrics.trim() || null,
-      collection: collection.trim() || null,
-      storage_path: path,
-      duration_seconds: duration,
-      sort_order: Number(sortOrder) || 0,
-    })
+    const ins = await tolerantWrite(
+      (p) => supabase.from('tracks').insert(p),
+      {
+        title: title.trim(),
+        subtitle: subtitle.trim() || null,
+        notes: notes.trim() || null,
+        lyrics: lyrics.trim() || null,
+        collection: collection.trim() || null,
+        storage_path: path,
+        duration_seconds: duration,
+        sort_order: Number(sortOrder) || 0,
+      },
+    )
     setBusy(false)
     if (ins.error) {
       // best-effort cleanup so we don't leave an orphan object
@@ -266,7 +285,9 @@ function AdminConsole({ email }) {
       return
     }
 
-    setMsg({ kind: 'ok', text: `Added "${title.trim()}".` })
+    setMsg(ins.dropped.length
+      ? { kind: 'notice', text: `Added "${title.trim()}" — but ${ins.dropped.join(', ')} didn't save (run the migration + restart the Supabase project, then re-edit).` }
+      : { kind: 'ok', text: `Added "${title.trim()}".` })
     setTitle(''); setSubtitle(''); setNotes(''); setLyrics(''); setSortOrder(0)
     if (fileRef.current) fileRef.current.value = ''
     refresh()
@@ -274,10 +295,15 @@ function AdminConsole({ email }) {
 
   async function onSave(id, patch) {
     setBusy(true)
-    const { error } = await supabase.from('tracks').update(patch).eq('id', id)
+    const res = await tolerantWrite(
+      (p) => supabase.from('tracks').update(p).eq('id', id),
+      patch,
+    )
     setBusy(false)
-    if (error) { setMsg({ kind: 'error', text: error.message }); return false }
-    setMsg({ kind: 'ok', text: `Saved "${patch.title}".` })
+    if (res.error) { setMsg({ kind: 'error', text: res.error.message }); return false }
+    setMsg(res.dropped.length
+      ? { kind: 'notice', text: `Saved — but ${res.dropped.join(', ')} was skipped (column not in the API cache yet; restart the Supabase project).` }
+      : { kind: 'ok', text: `Saved "${patch.title}".` })
     refresh()
     return true
   }
