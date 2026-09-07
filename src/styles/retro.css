@@ -330,17 +330,40 @@ button.btn:disabled:active { border-color: var(--hilite) var(--shadow-dark) var(
 .form-grid textarea { min-height: 90px; resize: vertical; }
 .form-grid textarea.lyrics-input { min-height: 150px; font-family: Consolas, "Courier New", monospace; }
 
-.admin-track-list { width: 100%; border-collapse: collapse; margin-top: 8px; }
-.admin-track-list th, .admin-track-list td {
-  text-align: left;
-  padding: 6px 8px;
-  border-bottom: 1px solid #ccc6b8;
+.admin-groups { display: grid; gap: 14px; }
+.admin-group { background: #fffef9; border: 2px groove var(--face); }
+.admin-group-head {
+  padding: 6px 10px;
+  background: #e7e0cf;
+  border-bottom: 1px solid var(--shadow);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--shadow-dark);
 }
-.admin-track-list tbody:nth-of-type(even) tr:first-child { background: #f3efe4; }
-.row-actions { display: flex; gap: 4px; white-space: nowrap; }
-.row-actions .btn { padding: 4px 8px; }
-.track-editor-row > td { background: #ece6d6; padding: 12px; }
-.track-editor-row .form-grid { max-width: 460px; }
+.admin-track { border-bottom: 1px solid #ece7db; }
+.admin-track.dragging { opacity: 0.4; }
+.admin-track-row {
+  display: grid;
+  grid-template-columns: 22px 26px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+.admin-track-row .drag-handle {
+  cursor: grab;
+  color: var(--shadow-dark);
+  text-align: center;
+  user-select: none;
+}
+.admin-track-row .at-num { text-align: right; opacity: 0.6; font-variant-numeric: tabular-nums; }
+.admin-track-row .at-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-track-row .at-len { font-family: Consolas, monospace; font-size: 12px; opacity: 0.8; }
+.admin-track-row .at-actions { display: flex; gap: 4px; white-space: nowrap; }
+.admin-track-row .at-actions .btn { padding: 4px 8px; }
+.track-editor { background: #ece6d6; padding: 12px; border-top: 1px solid var(--shadow); }
+.track-editor .form-grid { max-width: 460px; }
 .editor-actions { display: flex; gap: 8px; margin-top: 4px; }
 .notice { padding: 8px 10px; background: #fff7d6; border: 2px solid #d9c97a; }
 .error { padding: 8px 10px; background: #ffdede; border: 2px solid #cc8a8a; }

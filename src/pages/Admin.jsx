@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import TitleBar from '../components/TitleBar.jsx'
 import Taskbar from '../components/Taskbar.jsx'
@@ -118,7 +118,7 @@ function LoginForm() {
   )
 }
 
-function TrackRow({ row, busy, onSave, onDelete }) {
+function AdminTrack({ row, pos, busy, dragging, onDragStart, onDragEnd, onDropAt, onSave, onDelete }) {
   const [editing, setEditing] = useState(false)
   const [d, setD] = useState(null)
 
@@ -129,7 +129,6 @@ function TrackRow({ row, busy, onSave, onDelete }) {
       collection: row.collection || '',
       notes: row.notes || '',
       lyrics: row.lyrics || '',
-      sort_order: row.sort_order ?? 0,
     })
     setEditing(true)
   }
@@ -142,72 +141,76 @@ function TrackRow({ row, busy, onSave, onDelete }) {
       collection: d.collection.trim() || null,
       notes: d.notes.trim() || null,
       lyrics: d.lyrics.trim() || null,
-      sort_order: Number(d.sort_order) || 0,
     })
     if (ok) setEditing(false)
   }
 
   return (
-    <tbody>
-      <tr>
-        <td>{row.sort_order}</td>
-        <td>{row.title}{row.subtitle ? ` — ${row.subtitle}` : ''}</td>
-        <td>{row.collection || <span className="muted">—</span>}</td>
-        <td>{fmtTime(row.duration_seconds)}</td>
-        <td className="row-actions">
+    <div className={'admin-track' + (dragging ? ' dragging' : '')}>
+      <div
+        className="admin-track-row"
+        draggable={!editing}
+        onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }}
+        onDragEnd={onDragEnd}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          const r = e.currentTarget.getBoundingClientRect()
+          onDropAt(row.id, e.clientY > r.top + r.height / 2)
+        }}
+      >
+        <span className="drag-handle" title="Drag to reorder" aria-hidden="true">⠿</span>
+        <span className="at-num">{pos}</span>
+        <span className="at-title">{row.title}{row.subtitle ? ` — ${row.subtitle}` : ''}</span>
+        <span className="at-len">{fmtTime(row.duration_seconds)}</span>
+        <span className="at-actions">
           <button className="btn outset" disabled={busy} onClick={editing ? () => setEditing(false) : start}>
             {editing ? 'Close' : 'Edit'}
           </button>
           <button className="btn outset" disabled={busy} onClick={() => onDelete(row)}>Delete</button>
-        </td>
-      </tr>
+        </span>
+      </div>
       {editing && d && (
-        <tr className="track-editor-row">
-          <td colSpan={5}>
-            <div className="form-grid">
-              <label>
-                Title
-                <input type="text" value={d.title}
-                       onChange={(e) => setD({ ...d, title: e.target.value })} />
-              </label>
-              <label>
-                Subtitle / take <span className="muted">(optional)</span>
-                <input type="text" value={d.subtitle}
-                       onChange={(e) => setD({ ...d, subtitle: e.target.value })} />
-              </label>
-              <label>
-                EP / folder <span className="muted">(optional)</span>
-                <input type="text" list="collections-dl" value={d.collection}
-                       onChange={(e) => setD({ ...d, collection: e.target.value })} />
-              </label>
-              <label>
-                Liner notes <span className="muted">(optional)</span>
-                <textarea value={d.notes}
-                          onChange={(e) => setD({ ...d, notes: e.target.value })} />
-              </label>
-              <label>
-                Lyrics <span className="muted">(optional — karaoke panel; one line per line. Prefix a line with [mm:ss] for exact sync)</span>
-                <textarea className="lyrics-input" value={d.lyrics}
-                          onChange={(e) => setD({ ...d, lyrics: e.target.value })} />
-              </label>
-              <label>
-                Sort order <span className="muted">(lower = earlier)</span>
-                <input type="number" value={d.sort_order}
-                       onChange={(e) => setD({ ...d, sort_order: e.target.value })} />
-              </label>
-              <div className="editor-actions">
-                <button className="btn outset" disabled={busy || !d.title.trim()} onClick={save}>
-                  Save changes
-                </button>
-                <button className="btn outset" disabled={busy} onClick={() => setEditing(false)}>
-                  Cancel
-                </button>
-              </div>
+        <div className="track-editor">
+          <div className="form-grid">
+            <label>
+              Title
+              <input type="text" value={d.title}
+                     onChange={(e) => setD({ ...d, title: e.target.value })} />
+            </label>
+            <label>
+              Subtitle / take <span className="muted">(optional)</span>
+              <input type="text" value={d.subtitle}
+                     onChange={(e) => setD({ ...d, subtitle: e.target.value })} />
+            </label>
+            <label>
+              EP / folder <span className="muted">(optional — or just drag between groups)</span>
+              <input type="text" list="collections-dl" value={d.collection}
+                     onChange={(e) => setD({ ...d, collection: e.target.value })} />
+            </label>
+            <label>
+              Liner notes <span className="muted">(optional)</span>
+              <textarea value={d.notes}
+                        onChange={(e) => setD({ ...d, notes: e.target.value })} />
+            </label>
+            <label>
+              Lyrics <span className="muted">(optional — karaoke panel; one line per line. Prefix a line with [mm:ss] for exact sync)</span>
+              <textarea className="lyrics-input" value={d.lyrics}
+                        onChange={(e) => setD({ ...d, lyrics: e.target.value })} />
+            </label>
+            <div className="editor-actions">
+              <button className="btn outset" disabled={busy || !d.title.trim()} onClick={save}>
+                Save changes
+              </button>
+              <button className="btn outset" disabled={busy} onClick={() => setEditing(false)}>
+                Cancel
+              </button>
             </div>
-          </td>
-        </tr>
+          </div>
+        </div>
       )}
-    </tbody>
+    </div>
   )
 }
 
@@ -218,9 +221,9 @@ function AdminConsole({ email }) {
   const [notes, setNotes] = useState('')
   const [lyrics, setLyrics] = useState('')
   const [collection, setCollection] = useState('')
-  const [sortOrder, setSortOrder] = useState(0)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null) // {kind, text}
+  const [dragId, setDragId] = useState(null)
 
   const [rows, setRows] = useState([])
   const [loadingRows, setLoadingRows] = useState(true)
@@ -228,6 +231,29 @@ function AdminConsole({ email }) {
   const collections = [...new Set(
     rows.map((r) => (r.collection || '').trim()).filter(Boolean),
   )].sort((a, b) => a.localeCompare(b))
+
+  const rowsById = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows])
+
+  // Same grouping the player uses: by `collection`, groups ordered by their
+  // lowest sort_order (loose tracks last), tracks within a group ascending.
+  const groups = useMemo(() => {
+    const map = new Map()
+    rows.forEach((r) => {
+      const key = (r.collection || '').trim()
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(r)
+    })
+    const mn = (arr) => Math.min(...arr.map((r) => r.sort_order ?? 0))
+    const entries = [...map.entries()].sort((a, b) => {
+      if (!a[0]) return 1
+      if (!b[0]) return -1
+      return mn(a[1]) - mn(b[1]) || a[0].localeCompare(b[0])
+    })
+    entries.forEach(([, arr]) => arr.sort((x, y) =>
+      (x.sort_order ?? 0) - (y.sort_order ?? 0) ||
+      (x.created_at < y.created_at ? -1 : 1)))
+    return entries
+  }, [rows])
 
   async function refresh() {
     setLoadingRows(true)
@@ -263,6 +289,14 @@ function AdminConsole({ email }) {
     })
     if (up.error) { setBusy(false); setMsg({ kind: 'error', text: up.error.message }); return }
 
+    // Auto-number: next slot after the last track already in this collection;
+    // a brand-new collection goes to the very end.
+    const coll = collection.trim()
+    const inColl = rows.filter((r) => (r.collection || '').trim() === coll)
+    const nextOrder = inColl.length
+      ? Math.max(...inColl.map((r) => r.sort_order ?? 0)) + 1
+      : rows.length ? Math.max(...rows.map((r) => r.sort_order ?? 0)) + 1 : 0
+
     setMsg({ kind: 'notice', text: 'Saving track…' })
     const ins = await tolerantWrite(
       (p) => supabase.from('tracks').insert(p),
@@ -271,10 +305,10 @@ function AdminConsole({ email }) {
         subtitle: subtitle.trim() || null,
         notes: notes.trim() || null,
         lyrics: lyrics.trim() || null,
-        collection: collection.trim() || null,
+        collection: coll || null,
         storage_path: path,
         duration_seconds: duration,
-        sort_order: Number(sortOrder) || 0,
+        sort_order: nextOrder,
       },
     )
     setBusy(false)
@@ -288,8 +322,48 @@ function AdminConsole({ email }) {
     setMsg(ins.dropped.length
       ? { kind: 'notice', text: `Added "${title.trim()}" — but ${ins.dropped.join(', ')} didn't save (run the migration + restart the Supabase project, then re-edit).` }
       : { kind: 'ok', text: `Added "${title.trim()}".` })
-    setTitle(''); setSubtitle(''); setNotes(''); setLyrics(''); setSortOrder(0)
+    setTitle(''); setSubtitle(''); setNotes(''); setLyrics('')
     if (fileRef.current) fileRef.current.value = ''
+    refresh()
+  }
+
+  // Drag-drop reorder. `after` = dropped on the lower half of the target row.
+  async function reorder(destGroup, targetId, after) {
+    const srcId = dragId
+    setDragId(null)
+    if (!srcId || srcId === targetId) return
+
+    const model = groups.map(([name, list]) => ({ name, ids: list.map((r) => r.id) }))
+    model.forEach((g) => { g.ids = g.ids.filter((id) => id !== srcId) })
+    let dg = model.find((g) => g.name === destGroup)
+    if (!dg) { dg = { name: destGroup, ids: [] }; model.push(dg) }
+    let at = targetId ? dg.ids.indexOf(targetId) : dg.ids.length
+    if (at < 0) at = dg.ids.length
+    if (after && targetId) at += 1
+    dg.ids.splice(at, 0, srcId)
+
+    // Renumber every group into its own 1000-wide band so group order is kept
+    // and each collection stays a clean ascending run.
+    const patches = []
+    model.forEach((g, gi) => {
+      g.ids.forEach((id, i) => {
+        const cur = rowsById.get(id)
+        if (!cur) return
+        const nextSort = gi * 1000 + i
+        const nextColl = g.name || null
+        if (cur.sort_order !== nextSort || (cur.collection || '') !== (g.name || '')) {
+          patches.push({ id, sort_order: nextSort, collection: nextColl })
+        }
+      })
+    })
+    if (!patches.length) return
+
+    setBusy(true)
+    const results = await Promise.all(patches.map((p) =>
+      supabase.from('tracks').update({ sort_order: p.sort_order, collection: p.collection }).eq('id', p.id)))
+    setBusy(false)
+    const bad = results.find((r) => r.error)
+    if (bad) setMsg({ kind: 'error', text: bad.error.message })
     refresh()
   }
 
@@ -349,7 +423,7 @@ function AdminConsole({ email }) {
           <textarea className="lyrics-input" value={lyrics} onChange={(e) => setLyrics(e.target.value)} />
         </label>
         <label>
-          EP / folder <span className="muted">(optional — pick one or type a new name)</span>
+          EP / folder <span className="muted">(optional — pick one or type a new name; position is set automatically)</span>
           <input
             type="text"
             list="collections-dl"
@@ -361,29 +435,48 @@ function AdminConsole({ email }) {
             {collections.map((c) => <option key={c} value={c} />)}
           </datalist>
         </label>
-        <label>
-          Sort order <span className="muted">(lower = earlier)</span>
-          <input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
-        </label>
         {msg && <div className={msg.kind}>{msg.text}</div>}
         <button className="btn outset" disabled={busy}>{busy ? 'Working…' : 'Upload track'}</button>
       </form>
 
       <div>
         <h3 style={{ marginBottom: 4 }}>Tracks in the vault</h3>
+        <p className="muted" style={{ margin: '0 0 8px' }}>
+          Drag <span aria-hidden="true">⠿</span> to reorder within a group or move a track to another group.
+        </p>
         {loadingRows ? (
           <p>Loading…</p>
         ) : rows.length === 0 ? (
           <p className="muted">Nothing uploaded yet.</p>
         ) : (
-          <table className="admin-track-list">
-            <thead>
-              <tr><th>#</th><th>Title</th><th>EP / folder</th><th>Length</th><th></th></tr>
-            </thead>
-            {rows.map((r) => (
-              <TrackRow key={r.id} row={r} busy={busy} onSave={onSave} onDelete={onDelete} />
+          <div className="admin-groups">
+            {groups.map(([name, list]) => (
+              <div
+                className="admin-group"
+                key={name || '__loose'}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); reorder(name, null, false) }}
+              >
+                <div className="admin-group-head">
+                  {name || 'Loose tracks'} <span className="muted">· {list.length}</span>
+                </div>
+                {list.map((r, i) => (
+                  <AdminTrack
+                    key={r.id}
+                    row={r}
+                    pos={i + 1}
+                    busy={busy}
+                    dragging={dragId === r.id}
+                    onDragStart={() => setDragId(r.id)}
+                    onDragEnd={() => setDragId(null)}
+                    onDropAt={(targetId, after) => reorder(name, targetId, after)}
+                    onSave={onSave}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
             ))}
-          </table>
+          </div>
         )}
       </div>
     </div>
