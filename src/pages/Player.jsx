@@ -171,10 +171,11 @@ export default function Player() {
       map.get(key).push({ t, i })
     })
     const minSort = (items) => Math.min(...items.map((x) => x.t.sort_order ?? 0))
+    const minMade = (items) => items.reduce((m, x) => (x.t.created_at < m ? x.t.created_at : m), '~')
     return [...map.entries()].sort((a, b) => {
       if (!a[0]) return 1 // loose tracks last
       if (!b[0]) return -1
-      return minSort(a[1]) - minSort(b[1]) || a[0].localeCompare(b[0])
+      return minSort(a[1]) - minSort(b[1]) || (minMade(a[1]) < minMade(b[1]) ? -1 : 1)
     })
   }, [tracks])
 
@@ -294,13 +295,13 @@ export default function Player() {
                         <div className="pl-group">{name || 'Loose tracks'}</div>
                       )}
                       <ol>
-                        {items.map(({ t, i }) => (
+                        {items.map(({ t, i }, gi) => (
                           <li
                             key={t.id}
                             className={i === index ? 'active' : ''}
                             onClick={() => loadTrack(i, true)}
                           >
-                            <span className="idx">{i + 1}.</span>
+                            <span className="idx">{gi + 1}.</span>
                             <span className="pl-title">
                               {t.title}
                               {t.subtitle ? <span className="muted"> — {t.subtitle}</span> : null}

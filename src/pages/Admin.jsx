@@ -244,10 +244,11 @@ function AdminConsole({ email }) {
       map.get(key).push(r)
     })
     const mn = (arr) => Math.min(...arr.map((r) => r.sort_order ?? 0))
+    const made = (arr) => arr.reduce((m, r) => (r.created_at < m ? r.created_at : m), '~')
     const entries = [...map.entries()].sort((a, b) => {
       if (!a[0]) return 1
       if (!b[0]) return -1
-      return mn(a[1]) - mn(b[1]) || a[0].localeCompare(b[0])
+      return mn(a[1]) - mn(b[1]) || (made(a[1]) < made(b[1]) ? -1 : 1)
     })
     entries.forEach(([, arr]) => arr.sort((x, y) =>
       (x.sort_order ?? 0) - (y.sort_order ?? 0) ||
